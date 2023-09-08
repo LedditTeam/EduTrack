@@ -1,57 +1,55 @@
-import org.openqa.selenium.By;
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 
-import java.util.List;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/**
- * Hello world!
- */
 public class Main {
 
-    public static void main(String[] args) throws InterruptedException {
+    private static final Timer timer = new Timer();
+    private static final HashMap<String, String> profiles = new HashMap<>();
 
-        Timer timer = new Timer();
+    public static void main(String[] args) {
 
-        final WebDriver driverAuthorization = new ChromeDriver();
-
-        driverAuthorization.get("https://digital.etu.ru/attendance/student%22");
-
-        Thread.sleep(1000);
-
-        driverAuthorization.findElement(By.xpath("//*[@id=\"app\"]/div/div[2]/div/div/div[2]/p/div/button")).click();
-        driverAuthorization.findElement(By.xpath("/html/body/div/div[1]/div/div[2]/div/form/div[1]/div/div/input")).sendKeys("");
-        driverAuthorization.findElement(By.xpath("/html/body/div/div[1]/div/div[2]/div/form/div[2]/div/div/input")).sendKeys("");
-        driverAuthorization.findElement(By.xpath("/html/body/div/div[1]/div/div[2]/div/form/div[4]/div[2]/div/button")).click();
-        driverAuthorization.findElement(By.xpath("/html/body/div/div[1]/div/div[2]/div/div[4]/div/div[2]/form/button")).click();
+        profiles.put("Your email", "Your password");
 
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Cookie cookie1 = driverAuthorization.manage().getCookieNamed("connect.digital-attendance");
-                String cookieString = cookie1.toString();
-                System.out.println(cookie1);
-                System.out.println(cookieString.substring(27, cookieString.indexOf(";")));
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                for (Map.Entry<String, String> profile :
+                        profiles.entrySet()) {
+                    WebDriver driver = new ChromeDriver();
 
-                List<WebElement> elements = driverAuthorization.findElements(By.tagName("button"));
+                    try {
 
-                for (WebElement element: elements) {
-                    if (element.getText().equals("Посетить")){
-                        element.click();
+                        driver.get("https://digital.etu.ru/attendance/student%22");
+
+                        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+
+                        driver.findElement(By.xpath("//*[@id=\"app\"]/div/div[2]/div/div/div[2]/p/div/button")).click();
+                        driver.findElement(By.xpath("/html/body/div/div[1]/div/div[2]/div/form/div[1]/div/div/input")).sendKeys(profile.getKey());
+                        driver.findElement(By.xpath("/html/body/div/div[1]/div/div[2]/div/form/div[2]/div/div/input")).sendKeys(profile.getValue());
+                        driver.findElement(By.xpath("/html/body/div/div[1]/div/div[2]/div/form/div[4]/div[2]/div/button")).click();
+                        driver.findElement(By.xpath("/html/body/div/div[1]/div/div[2]/div/div[4]/div/div[2]/form/button")).click();
+
+                        driver.findElement(By.xpath("/html/body/div/div/div[3]/div/div/div/div[2]/div[1]/div/div/div/div[1]/div/div/button")).click();
+
+                        driver.findElement(By.xpath("/html/body/div/div/nav/ul/li[2]/a/svg")).click();
+                        driver.findElement(By.xpath("/html/body/div[2]/div[1]/div/div/footer/button[1]")).click();
+
+                    } catch (NoSuchElementException e) {
+                        System.out.println("Проблемы с интернетом или сайт сломался)");
+                    } catch (ElementClickInterceptedException e) {
+                        System.out.println("Вы уже отметились");
+                    } finally {
+                        driver.close();
                     }
                 }
             }
-        }, 0, 5000);
-
+        }, 0, 60 * 60 * 1000);
     }
 
 }
